@@ -1,0 +1,61 @@
+:root {
+  font-size: 16px;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: auto;
+}
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+html,
+body {
+  position: relative;
+  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+}
+
+.MuiTabs-vertical .MuiTab-textColorPrimary {
+  align-items: flex-start;
+}
+
+.MuiMenuItem-root .MuiSelect-outlined {
+  font-family: "Roboto", "Helvetica", "Arial", sans-serif !important;
+  font-size: 14px;
+}
+
+.css-19ergew-MuiGrid-root {
+  padding: 0px;
+}
+
+.css-hdnqye-MuiGrid-root {
+  padding: 0px;
+}
+
+.css-73imaa {
+  padding: 0px !important;
+}
+
+.css-pc7201{
+  padding: 0px !important;
+}
+
+.css-j204z7-MuiFormControlLabel-root.Mui-disabled {
+  margin-top: 5px;
+  height: 30px;
+}
+
+.css-j204z7-MuiFormControlLabel-root .MuiFormControlLabel-label {
+  margin-top: 5px;
+}
+
+.css-lc4eiu-MuiStack-root {
+  margin-top: 5px;
+}
+.MuiFormControlLabel-root
+  .MuiFormControlLabel-labelPlacementEnd
+  .css-j204z7-MuiFormControlLabel-root {
+  margin-top: 15px;
+}
