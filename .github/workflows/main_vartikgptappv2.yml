@@ -14,7 +14,8 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Node.js version
         uses: actions/setup-node@v3
@@ -26,7 +27,7 @@ jobs:
           npm install
           npm run build --if-present
           npm run test --if-present
-      
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -39,27 +40,29 @@ jobs:
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
     permissions:
-      id-token: write #This is required for requesting the JWT
+      id-token: write # This is required for requesting the JWT
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
+
+      - name: Extract files
+        run: mkdir -p myapp && tar -xzf node-app.tar.gz -C myapp
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_354903CF11D440D795F2B8648B9AD43E }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_87D44EB80E304B9892D2A7D9490724FE }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_06F4C930EB2849DABEEEAAFA9313B962 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_55D185749504469ABBA2494EBE914C22 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_3728FC759A904E09B86CEFFBAD74EB46 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_5EBB74ADC03B4898BC185E1EBA994FF2 }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'VartikgptappV2'
           slot-name: 'Production'
-          package: .
-          
