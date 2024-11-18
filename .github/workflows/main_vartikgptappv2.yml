@@ -50,7 +50,9 @@ jobs:
           name: node-app
 
       - name: Extract files
-        run: mkdir -p myapp && tar -xzf node-app.tar.gz -C myapp
+        run: |
+              mkdir -p myapp
+              tar -xzvf node-app.tar.gz --transform 's|^.*azureDevOpsCli\\cache.*|myapp|' -C myapp
 
       - name: Login to Azure
         uses: azure/login@v2
