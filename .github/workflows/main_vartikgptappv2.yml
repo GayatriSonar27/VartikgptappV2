@@ -28,7 +28,7 @@ jobs:
           npm run export --if-present
 
       - name: Compress files
-        run: tar -czf node-app.tar.gz -C out .  # Change 'out' to '.next' if not using static export
+        run: tar -czf node-app.tar.gz -C .next . 
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
