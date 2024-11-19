@@ -69,9 +69,4 @@ jobs:
         id: deploy-to-webapp
         with:
           app-name: 'VartikgptappV2'
-          package: myapp
-
-      - name: Clear Azure CLI Cache
-        run: |
-          echo "Clearing Azure CLI accounts from local cache"
-          az account clear
+          package: ./myapp
