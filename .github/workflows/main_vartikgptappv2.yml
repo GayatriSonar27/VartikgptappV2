@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js app to Azure Web App - VartikgptappV2
+name: Build and deploy Next.js app to Azure Web App - VartikgptappV2
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -20,21 +20,21 @@ jobs:
         with:
           node-version: '18.x'
 
-      - name: npm install, build, and test
+      - name: Install dependencies and build
         run: |
           npm install
-          npm run build --if-present
-          npm run test --if-present
-          npm run export --if-present
+          npm run build
+          npm install next@latest
 
-      - name: Compress files
-        run: tar -czf node-app.tar.gz -C .out . 
+      - name: Archive build output
+        run: |
+          tar -czf nextjs-app.tar.gz -C .next .
 
-      - name: Upload artifact for deployment job
+      - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: node-app.tar.gz
+          name: nextjs-app
+          path: nextjs-app.tar.gz
 
   deploy:
     runs-on: ubuntu-latest
@@ -50,10 +50,12 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: node-app
+          name: nextjs-app
 
       - name: Extract files
-        run: mkdir -p myapp && tar -xzf node-app.tar.gz -C myapp
+        run: |
+          mkdir -p myapp && tar -xzf nextjs-app.tar.gz -C myapp
+          ls myapp # Debug to ensure files are extracted correctly
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -62,15 +64,14 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_87D44EB80E304B9892D2A7D9490724FE }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_06F4C930EB2849DABEEEAAFA9313B962 }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'VartikgptappV2'
-          slot-name: 'Production'
-          package: .
+          package: myapp
 
-      - name: Post-job cleanup
+      - name: Clear Azure CLI Cache
         run: |
           echo "Clearing Azure CLI accounts from local cache"
-          /usr/bin/az account clear
+          az account clear
