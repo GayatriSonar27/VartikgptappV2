@@ -23,11 +23,11 @@ jobs:
       - name: Install dependencies and build
         run: |
           npm install
-          npm run build
-          npm run export
+          npm run build  # This will generate static files in the `out` directory
 
       - name: Archive static output
-        run: tar -czf static-site.tar.gz -C out .
+        run: |
+          tar -czf static-site.tar.gz -C out .
 
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
@@ -61,4 +61,3 @@ jobs:
         with:
           app-name: 'VartikgptappV2'
           package: myapp
-       
