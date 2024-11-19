@@ -1,5 +1,66 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
+# # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# # More GitHub Actions for Azure: https://github.com/Azure/actions
+
+# name: Build and deploy Next.js app to Azure Web App - VartikgptappV2
+
+# on:
+#   push:
+#     branches:
+#       - main
+#   workflow_dispatch:
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - name: Set up Node.js version
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: '18.x'
+
+#       - name: Install dependencies and build
+#         run: |
+#           npm install
+#           npm run build  # This will generate static files in the `out` directory
+
+#       - name: Archive static output
+#         run: |
+#           tar -czf static-site.tar.gz -C out .
+
+#       - name: Upload artifact for deployment
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: static-site
+#           path: static-site.tar.gz
+
+#   deploy:
+#     runs-on: ubuntu-latest
+#     needs: build
+#     steps:
+#       - name: Download artifact from build job
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: static-site
+
+#       - name: Extract files
+#         run: |
+#           mkdir -p myapp && tar -xzf static-site.tar.gz -C myapp
+#           ls myapp # Debug to ensure files are extracted correctly
+
+#       - name: Login to Azure
+#         uses: azure/login@v2
+#         with:
+#           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_354903CF11D440D795F2B8648B9AD43E }}
+#           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_87D44EB80E304B9892D2A7D9490724FE }}
+#           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_06F4C930EB2849DABEEEAAFA9313B962 }}
+
+#       - name: Deploy to Azure Web App
+#         uses: azure/webapps-deploy@v3
+#         with:
+#           app-name: 'VartikgptappV2'
+#           package: myapp
 
 name: Build and deploy Next.js app to Azure Web App - VartikgptappV2
 
@@ -8,6 +69,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+
+# Add this permissions block
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   build:
