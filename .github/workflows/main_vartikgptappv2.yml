@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy Node.js app to Azure Web App - VartikgptappV2
 
 on:
@@ -14,27 +11,22 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
-
-      - name: npm install, build, and test
+          
+      - name: npm install and build
         run: |
           npm install
-          npm run build --if-present
-          npm run test --if-present
-          npm run export --if-present
-
-      - name: Compress files
-        run: tar -czf node-app.tar.gz -C .next . 
-
+          npm run build
+          
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: node-app.tar.gz
+          path: build  # Standard React build output directory
 
   deploy:
     runs-on: ubuntu-latest
@@ -42,31 +34,26 @@ jobs:
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-
     permissions:
       id-token: write
-
+      
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
-
-      - name: Extract files
-        run: mkdir -p myapp && tar -xzf node-app.tar.gz -C myapp
-
+          
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_354903CF11D440D795F2B8648B9AD43E }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_354903CF11D40D795F2B8648B9AD43E }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_87D44EB80E304B9892D2A7D9490724FE }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_06F4C930EB2849DABEEEAAFA9313B962 }}
-
+          
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'VartikgptappV2'
           slot-name: 'Production'
-          package: myapp  # Changed from ./build to myapp
-  
+          package: .
