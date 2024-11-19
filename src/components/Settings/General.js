@@ -607,7 +607,7 @@ export default function General({ onDepartmentNameChange }) {
         );
         departmentId = createDepartmentResponse.data.id;
       } else {
-        ({ departmentId } = fetchDepartmentIdResponse.data);
+         departmentId = fetchDepartmentIdResponse.data;
       }
 
       // Fetch Department Name
