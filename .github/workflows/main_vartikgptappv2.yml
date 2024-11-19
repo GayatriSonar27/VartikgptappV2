@@ -24,37 +24,29 @@ jobs:
         run: |
           npm install
           npm run build
-          npm install next@latest
+          npm run export
 
-      - name: Archive build output
-        run: |
-          tar -czf nextjs-app.tar.gz -C .next .
+      - name: Archive static output
+        run: tar -czf static-site.tar.gz -C out .
 
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
-          name: nextjs-app
-          path: nextjs-app.tar.gz
+          name: static-site
+          path: static-site.tar.gz
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-
-    permissions:
-      id-token: write
-
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: nextjs-app
+          name: static-site
 
       - name: Extract files
         run: |
-          mkdir -p myapp && tar -xzf nextjs-app.tar.gz -C myapp
+          mkdir -p myapp && tar -xzf static-site.tar.gz -C myapp
           ls myapp # Debug to ensure files are extracted correctly
 
       - name: Login to Azure
@@ -66,12 +58,6 @@ jobs:
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
-        id: deploy-to-webapp
         with:
           app-name: 'VartikgptappV2'
           package: myapp
-
-      - name: Clear Azure CLI Cache
-        run: |
-          echo "Clearing Azure CLI accounts from local cache"
-          az account clear
