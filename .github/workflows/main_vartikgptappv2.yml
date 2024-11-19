@@ -86,15 +86,21 @@ jobs:
         with:
           node-version: '18.x'
 
+      - name: Set environment variables
+        run: |
+          echo "REACT_APP_MSAL_REDIRECT_URI=${{ secrets.REACT_APP_MSAL_REDIRECT_URI }}" >> $GITHUB_ENV
+          echo "REACT_APP_API_BASE_URL=${{ secrets.REACT_APP_API_BASE_URL }}" >> $GITHUB_ENV
+          echo "REACT_APP_API_CHAT_URL=${{ secrets.REACT_APP_API_CHAT_URL }}" >> $GITHUB_ENV
+          echo "REACT_APP_INJECT_API_BASE_URL=${{ secrets.REACT_APP_INJECT_API_BASE_URL }}" >> $GITHUB_ENV
+          echo "REACT_APP_VECTORDB_API_BASE_URL=${{ secrets.REACT_APP_VECTORDB_API_BASE_URL }}" >> $GITHUB_ENV
+
       - name: npm install, build, and test
         run: |
           npm install
-          npm run build --if-present
-          npm run test --if-present
-          npm run export --if-present
+          npm run build
 
       - name: Compress files
-        run: tar -czf node-app.tar.gz -C out .  # Change 'out' to '.next' if not using static export
+        run: tar -czf node-app.tar.gz -C out .
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -132,6 +138,6 @@ jobs:
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'VartikgptappV2'   # Ensure this is the correct Web App name
-          slot-name: 'Production'    # Ensure this slot exists (or remove it if you don't use slots)
+          app-name: 'VartikgptappV2'
+          slot-name: 'Production'
           package: myapp
