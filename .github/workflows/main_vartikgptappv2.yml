@@ -20,19 +20,21 @@ jobs:
         with:
           node-version: '18.x'
 
-      - name: Install dependencies and build project
+      - name: npm install, build, and test
         run: |
           npm install
-          npm run build # Build your React/Next.js app
-      # Compress the `.next` folder (or your React build folder)
-      - name: Compress build files
-        run: tar -czf build-artifact.tar.gz -C out .
+          npm run build --if-present
+          npm run test --if-present
+          npm run export --if-present
+
+      - name: Compress files
+        run: tar -czf node-app.tar.gz -C .next . 
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifact
-          path: build-artifact.tar.gz
+          name: node-app
+          path: node-app.tar.gz
 
   deploy:
     runs-on: ubuntu-latest
@@ -48,10 +50,10 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: build-artifact
+          name: node-app
 
-      - name: Extract build artifact
-        run: mkdir -p myapp && tar -xzf build-artifact.tar.gz -C myapp
+      - name: Extract files
+        run: mkdir -p myapp && tar -xzf node-app.tar.gz -C myapp
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -60,10 +62,11 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_87D44EB80E304B9892D2A7D9490724FE }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_06F4C930EB2849DABEEEAAFA9313B962 }}
 
-      - name: Deploy to Azure Web App
+      - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'VartikgptappV2'
           slot-name: 'Production'
-          package: myapp # Ensure this matches your extracted folder
+          package: myapp  # Changed from ./build to myapp
+  
