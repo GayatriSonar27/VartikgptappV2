@@ -62,7 +62,8 @@
 #           app-name: 'VartikgptappV2'
 #           package: myapp
 
-name: Build and deploy Next.js app to Azure Web App - VartikgptappV2
+
+name: Build and deploy Node.js app to Azure Web App - VartikgptappV2
 
 on:
   push:
@@ -70,14 +71,9 @@ on:
       - main
   workflow_dispatch:
 
-# Add this permissions block
-permissions:
-  id-token: write
-  contents: read
-
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -86,34 +82,40 @@ jobs:
         with:
           node-version: '18.x'
 
-      - name: Install dependencies and build
+      - name: npm install, build, and test
         run: |
           npm install
-          npm run build  # This will generate static files in the `out` directory
+          npm run build --if-present
+          npm run test --if-present
+          npm run export --if-present
 
-      - name: Archive static output
-        run: |
-          tar -czf static-site.tar.gz -C out .
+      - name: Compress files
+        run: tar -czf node-app.tar.gz -C out .  # Change 'out' to '.next' if not using static export
 
-      - name: Upload artifact for deployment
+      - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: static-site
-          path: static-site.tar.gz
+          name: node-app
+          path: node-app.tar.gz
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    permissions:
+      id-token: write
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: static-site
+          name: node-app
 
       - name: Extract files
-        run: |
-          mkdir -p myapp && tar -xzf static-site.tar.gz -C myapp
-          ls myapp # Debug to ensure files are extracted correctly
+        run: mkdir -p myapp && tar -xzf node-app.tar.gz -C myapp
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -122,8 +124,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_87D44EB80E304B9892D2A7D9490724FE }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_06F4C930EB2849DABEEEAAFA9313B962 }}
 
-      - name: Deploy to Azure Web App
+      - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
         with:
-          app-name: 'VartikgptappV2'
+          app-name: 'VartikgptappV2'   # Ensure this is the correct Web App name
+          slot-name: 'Production'    # Ensure this slot exists (or remove it if you don't use slots)
           package: myapp
