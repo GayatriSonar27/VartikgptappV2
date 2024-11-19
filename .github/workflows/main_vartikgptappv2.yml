@@ -57,3 +57,8 @@ jobs:
           app-name: 'VartikgptappV2'
           slot-name: 'Production'
           package: .
+
+      - name: Post-job cleanup
+        run: |
+          echo "Clearing Azure CLI accounts from local cache"
+          /usr/bin/az account clear
