@@ -20,6 +20,7 @@ import ArticleIcon from "@mui/icons-material/Article";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import SlideshowIcon from "@mui/icons-material/Slideshow";
 import { LoadingButton } from "@mui/lab";
+import Image from "next/image";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const API_CHAT_URL = process.env.REACT_APP_API_CHAT_URL;
@@ -466,7 +467,7 @@ export default function useChatArea({
                   flexShrink: 0,
                 }}
               >
-                <img
+                <Image
                   src={msg.role === "User" ? userIcon : assistantIcon}
                   alt={`${msg.role} icon`}
                   style={{

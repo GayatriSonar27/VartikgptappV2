@@ -122,50 +122,6 @@ const useDepartments = () => {
   return { departments, setDepartments, loadDepartments };
 };
 
-// const DepartmentTable = memo(
-//   ({ departments, categories, onDelete, onEdit }) => {
-//     return (
-//       <TableContainer sx={{ marginTop: "40px" }} component={Paper}>
-//         <Table>
-//           <TableHead>
-//             <TableRow>
-//               <TableCell>Department</TableCell>
-//               <TableCell>Roles</TableCell>
-//               <TableCell>Actions</TableCell>
-//             </TableRow>
-//           </TableHead>
-//           <TableBody>
-//             {departments.map((row) => (
-//               <TableRow key={row.id}>
-//                 <TableCell>{row.name}</TableCell>
-//                 <TableCell>
-//                   {row.categories.map((category) => (
-//                     <Typography
-//                       key={category.id}
-//                       variant="body2"
-//                       color="textSecondary"
-//                     >
-//                       {category.name}
-//                     </Typography>
-//                   ))}
-//                 </TableCell>
-//                 <TableCell>
-//                   <IconButton color="primary" onClick={() => onEdit(row)}>
-//                     <EditOutlinedIcon />
-//                   </IconButton>
-//                   <IconButton color="error" onClick={() => onDelete(row.id)}>
-//                     <DeleteOutlinedIcon />
-//                   </IconButton>
-//                 </TableCell>
-//               </TableRow>
-//             ))}
-//           </TableBody>
-//         </Table>
-//       </TableContainer>
-//     );
-//   }
-// );
-
 const DepartmentTable = memo(({ departments, onDelete, onEdit }) => {
   return (
     <TableContainer component={Paper} sx={{ marginTop: "40px", border: "1px solid #ddd" }}>
@@ -213,6 +169,8 @@ const DepartmentTable = memo(({ departments, onDelete, onEdit }) => {
     </TableContainer>
   );
 });
+DepartmentTable.displayName = "DepartmentTable";
+
 
 const DepartmentForm = memo(({ categories, onSave }) => {
   const [formData, setFormData] = useState({
@@ -326,8 +284,8 @@ const DepartmentForm = memo(({ categories, onSave }) => {
     </Container>
   );
 });
+DepartmentForm.displayName = "DepartmentForm";
 
-// --- DepartmentEditForm Component for Editing Departments ---
 const DepartmentEditForm = memo(({ categories, department, onSave }) => {
   const [formData, setFormData] = useState({
     departmentName: department ? department.name : "",
@@ -439,6 +397,7 @@ const DepartmentEditForm = memo(({ categories, department, onSave }) => {
     </Container>
   );
 });
+DepartmentEditForm.displayName = "DepartmentEditForm";
 
 export default function App() {
   const [tabIndex, setTabIndex] = useState(0);

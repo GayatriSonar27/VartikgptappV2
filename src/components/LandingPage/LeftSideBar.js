@@ -57,6 +57,8 @@ const Component = memo(({ icon, label, onClick, role }) => {
   );
 });
 
+Component.displayName = 'Component';
+
 export default function LeftSideBar({ setSelectedTab, setSelectedSessionId }) {
   const logout = useLogout();
   const [username, setUsername] = useState("");
