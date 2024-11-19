@@ -93,7 +93,7 @@ export default function General({ onDepartmentNameChange }) {
         }));
       }
     }
-  }, []);
+  }, [[formData.admin, formData.cacheEnabled, formData.maxTokens, formData.routingEnabled, formData.temp]]);
 
   // Initial function calls when page load
   const callGraphApi = useCallback(async () => {
