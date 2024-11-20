@@ -153,6 +153,10 @@ export default function useChatArea({
         routing_enabled: routingEnabled,
       };
 
+      if (localStorageData.llmVendor === "AzureOpenAI") {
+        requestBody.llm_deployment = localStorageData.llmModel;
+      }
+
       const { ok, status, headers, text } = await fetch(`${API_CHAT_URL}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "text/plain" },
