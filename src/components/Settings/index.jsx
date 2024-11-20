@@ -44,7 +44,7 @@ export default function Settings() {
             value={tabIndex}
             onChange={handleTabChange}
             aria-label="Settings Tabs"
-            sx={{ height: "100%" }}
+            sx={{ height: "100%" , position:"absolute"}}
           >
             <Tab label="General" {...tabProps(0)} />
             {showVectorDB && <Tab label="Vector DB" {...tabProps(1)} />}

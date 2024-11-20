@@ -15,12 +15,7 @@ import {
 import MicIcon from "@mui/icons-material/Mic";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import PauseIcon from "@mui/icons-material/Pause";
-import ShareIcon from "@mui/icons-material/Share";
-import ArticleIcon from "@mui/icons-material/Article";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import SlideshowIcon from "@mui/icons-material/Slideshow";
 import { LoadingButton } from "@mui/lab";
-import Image from "next/image";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const API_CHAT_URL = process.env.REACT_APP_API_CHAT_URL;
@@ -39,9 +34,7 @@ export default function useChatArea({
   const [cachingEnabled, setCachingEnabled] = useState(null);
   const [routingEnabled, setRoutingEnabled] = useState(null);
   const [isListening, setIsListening] = useState(false);
-  const [speakingMessageIndex, setSpeakingMessageIndex] = useState(null);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
+  const [speakingMessageIndex, setSpeakingMessageIndex] = useState(null); 
 
   useEffect(() => {
     const storedData = localStorage.getItem("azureAccount");
@@ -235,7 +228,6 @@ export default function useChatArea({
     }
   };
 
-
   const handleVoiceInput = () => {
     if (
       !("webkitSpeechRecognition" in window || "SpeechRecognition" in window)
@@ -291,10 +283,6 @@ export default function useChatArea({
     setAnchorEl(null);
   };
 
-  const handleShareClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
   const formatMessage = (msg) => {
     return msg.split("\n").map((line, index) => (
       <div
@@ -304,125 +292,6 @@ export default function useChatArea({
         {line}
       </div>
     ));
-  };
-
-  const exportAsDoc = () => {
-    let content = "<html><head><style>";
-    content +=
-      ".message { margin: 10px 0; padding: 10px; } .User { background: #f0f0f0; } .Assistant { background: #f0f0f0; }";
-    content += "</style></head><body>";
-    content += "<h1>Chat Export</h1>";
-
-    messages.forEach((msg) => {
-      content += `<div class="message ${msg.role.toLowerCase()}"><strong>${
-        msg.role
-      }:</strong><br/>${msg.message.replace(/\n/g, "<br/>")}`;
-      content += "</div>";
-    });
-
-    content += "</body></html>";
-    const blob = new Blob([content], { type: "application/msword" });
-    saveAs(blob, "ChatExportAsDoc.doc");
-  };
-
-  const exportAsPdf = () => {
-    const doc = new jsPDF();
-    let yPos = 20;
-    const pageHeight = doc.internal.pageSize.height;
-    const margin = 20;
-    const lineHeight = 7;
-
-    doc.setFontSize(16);
-    doc.text("Chat Export", margin, yPos);
-    yPos += 10;
-    doc.setFontSize(12);
-
-    messages.forEach((msg) => {
-      if (yPos > pageHeight - margin) {
-        doc.addPage();
-        yPos = margin;
-      }
-
-      doc.setFont(undefined, "bold");
-      doc.text(`${msg.role}:`, margin, yPos);
-      yPos += lineHeight;
-
-      doc.setFont(undefined, "normal");
-      const messageLines = doc.splitTextToSize(
-        msg.message,
-        doc.internal.pageSize.width - 2 * margin
-      );
-      messageLines.forEach((line) => {
-        if (yPos > pageHeight - margin) {
-          doc.addPage();
-          yPos = margin;
-        }
-        doc.text(line, margin, yPos);
-        yPos += lineHeight;
-      });
-
-      yPos += 5;
-    });
-
-    doc.save("chat-export.pdf");
-  };
-
-  const exportAsPpt = () => {
-    import("pptxgenjs").then((module) => {
-      const PptxGenJS = module.default; // Access the default export
-      const pptx = new PptxGenJS();
-      let slide = pptx.addSlide();
-      slide.addText("Chat Export", {
-        x: 0.5,
-        y: 0.5,
-        fontSize: 24,
-        bold: true,
-      });
-
-      let yPos = 1.0;
-      const maxSlideHeight = 6.0;
-      let index = 0;
-
-      const processMessages = () => {
-        if (index < messages.length) {
-          const msg = messages[index];
-          if (yPos > maxSlideHeight) {
-            slide = pptx.addSlide();
-            yPos = 0.5;
-          }
-
-          slide.addText(
-            [
-              { text: `${msg.role}:\n`, options: { bold: true } },
-              { text: msg.message },
-            ],
-            { x: 0.5, y: yPos, w: "90%", fontSize: 16, color: "363636" }
-          );
-          yPos += 1.0;
-          index++;
-          setTimeout(processMessages, 0);
-        } else {
-          pptx.writeFile("chat-export.pptx");
-        }
-      };
-      processMessages();
-    });
-  };
-
-  const handleExport = (format) => {
-    switch (format) {
-      case "docs":
-        exportAsDoc();
-        break;
-      case "pdf":
-        exportAsPdf();
-        break;
-      case "ppt":
-        exportAsPpt();
-        break;
-      default:
-        console.error("Unknown format:", format);
-    }
   };
 
   return (
@@ -439,7 +308,6 @@ export default function useChatArea({
         paddingBottom: 5,
       }}
     >
-      {/* Header */}
       <Box sx={{ padding: 2, textAlign: "left" }}>
         <Typography variant="h6" sx={{ fontSize: "1.5rem" }}>
           Hello{" "}
@@ -450,7 +318,6 @@ export default function useChatArea({
         <Typography variant="h6">How can I help you today?</Typography>
       </Box>
 
-      {/* Chat Messages */}
       <Box
         sx={{
           flexGrow: 1,
@@ -536,50 +403,6 @@ export default function useChatArea({
                         )}
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Share & export">
-                      <IconButton
-                        onClick={(e) => handleShareClick(e)}
-                        sx={{ flexShrink: 0, alignSelf: "center" }}
-                        aria-label="share chat"
-                      >
-                        <ShareIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Menu
-                      anchorEl={anchorEl}
-                      open={open}
-                      onClose={handleClose}
-                      anchorOrigin={{
-                        vertical: "top",
-                        horizontal: "right",
-                      }}
-                      transformOrigin={{
-                        vertical: "bottom",
-                        horizontal: "right",
-                      }}
-                    >
-                      <MenuItem
-                        onClick={() => handleExport("docs")}
-                        sx={{ gap: 0.8, fontSize: "0.895rem" }}
-                      >
-                        <ArticleIcon fontSize="small" />
-                        Export as Docs
-                      </MenuItem>
-                      <MenuItem
-                        onClick={() => handleExport("pdf")}
-                        sx={{ gap: 1, fontSize: "0.895rem" }}
-                      >
-                        <PictureAsPdfIcon fontSize="small" />
-                        Export as PDF
-                      </MenuItem>
-                      <MenuItem
-                        onClick={() => handleExport("ppt")}
-                        sx={{ gap: 1, fontSize: "0.895rem" }}
-                      >
-                        <SlideshowIcon fontSize="small" />
-                        Export as PPT
-                      </MenuItem>
-                    </Menu>
                   </Box>
                 )}
               </Box>
@@ -588,7 +411,6 @@ export default function useChatArea({
         ))}
       </Box>
 
-      {/* Input Area */}
       <Box
         sx={{
           padding: 2,

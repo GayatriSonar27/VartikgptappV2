@@ -242,7 +242,7 @@ const DepartmentForm = memo(({ categories, onSave }) => {
           onChange={handleChange}
         />
         <FormControl fullWidth size="small" variant="outlined">
-          <InputLabel>Categories</InputLabel>
+          <InputLabel>Roles</InputLabel>
           <Select
             name="categoryIds"
             multiple
@@ -355,7 +355,7 @@ const DepartmentEditForm = memo(({ categories, department, onSave }) => {
           onChange={handleChange}
         />
         <FormControl fullWidth size="small" variant="outlined">
-          <InputLabel>Categories</InputLabel>
+          <InputLabel>Roles</InputLabel>
           <Select
             name="categoryIds"
             multiple
@@ -410,6 +410,9 @@ export default function App() {
   }, [loadDepartments]);
 
   const handleTabChange = (event, newValue) => {
+    if (newValue !== 2) {
+      setSelectedDepartment(null);
+    }
     setTabIndex(newValue);
   };
 
@@ -444,6 +447,7 @@ export default function App() {
       await apiService.postDepartment(data);
     }
     loadDepartments();
+    setSelectedDepartment(null);
     setTabIndex(0);
   };
   
@@ -453,7 +457,7 @@ export default function App() {
       <Tabs value={tabIndex} onChange={handleTabChange} aria-label="tabs">
         <Tab label="View" />
         <Tab label="Create" />
-        <Tab label="Update" />
+        {selectedDepartment && <Tab label="Update" />}
       </Tabs>
       {tabIndex === 0 && (
         <DepartmentTable
