@@ -672,12 +672,12 @@ export default function VectorDB() {
                           size="small"
                           fullWidth
                           required
-                          error={formErrors.promptFile} // Display error if validation fails
-                          helperText={
-                            formErrors.promptFile ? "Prompt is required" : ""
-                          } // Custom error message
+                          error={formErrors.promptFile}
+                          helperText={formErrors.promptFile ? "Prompt is required" : ""}
                           sx={{ mb: 2 }}
-                          // value={formData.promptFile}
+                          multiline
+                          rows={2}
+                          value={vectorDBData.promptFile}
                           onChange={handleChange}
                         />
 
@@ -900,9 +900,11 @@ export default function VectorDB() {
                             error={formErrors.promptFile} // Display error if validation fails
                             helperText={
                               formErrors.promptFile ? "Prompt is required" : ""
-                            } // Custom error message
+                            }
                             sx={{ mb: 2 }}
-                            // value={formData.promptFile}
+                            multiline
+                          rows={2}
+                            value={vectorDBData.promptFile}
                             onChange={handleChange}
                           />
 
@@ -1000,7 +1002,9 @@ export default function VectorDB() {
                           size="small"
                           fullWidth
                           sx={{ mb: 2 }}
-                          // value={formData.promptFile}
+                          multiline
+                          rows={2}
+                          value={vectorDBData.promptFile}
                           onChange={handleChange}
                         />
 
