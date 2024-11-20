@@ -152,71 +152,89 @@ export default function useChatArea({
         caching_enabled: cachingEnabled,
         routing_enabled: routingEnabled,
       };
+      if (localStorageData.llmVendor === "AzureOpenAI") {
+        requestBody.llm_deployment = localStorageData.llmModel;
+      }
 
-      const { ok, status, headers, text } = await fetch(`${API_CHAT_URL}`, {
+      const response = await fetch(`${API_CHAT_URL}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "text/plain" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/plain",
+        },
         body: JSON.stringify(requestBody),
       });
-
-      if (ok) {
-        if (headers.get("Content-Type")?.includes("application/json")) {
-          const { message: assistantMessage = "No data in indexes" } =
-            JSON.parse(await text());
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            { role: "assistant", message: assistantMessage },
-          ]);
-          await axios.post(`${API_BASE_URL}/ChatHistory`, {
-            userId,
-            sessionId: selectedSessionId,
-            role: "assistant",
-            message: assistantMessage,
-            updatedDateTime: new Date(),
-            cachingEnabled,
-            routingEnabled,
-          });
+      if (response.ok) {
+        if (
+          response.headers.get("Content-Type")?.includes("application/json")
+        ) {
+          const jsonData = await response.json();
+          const json = JSON.parse(jsonData);
+          if (json && json.message) {
+            const message = json.message;
+            const assistantResponse = message || `No data in indexes`;
+            setMessages((prevMessages) => [
+              ...prevMessages,
+              { role: "assistant", message: assistantResponse },
+            ]);
+            await axios.post(`${API_BASE_URL}/ChatHistory`, {
+              userId: userId,
+              sessionId: selectedSessionId,
+              role: "assistant",
+              message: assistantResponse,
+              updatedDateTime: new Date(),
+              cachingEnabled: cachingEnabled,
+              routingEnabled: routingEnabled,
+            });
+          } else {
+            console.error(
+              "Message key is undefined or not found in JSON data."
+            );
+            setMessages((prevMessages) => [
+              ...prevMessages,
+              {
+                role: "assistant",
+                message: `Error: No message found in response`,
+              },
+            ]);
+          }
         } else {
           console.error("Response is not in JSON format.");
           setMessages((prevMessages) => [
             ...prevMessages,
-            { role: "assistant", message: "Error: Invalid response format" },
+            { role: "assistant", message: `Error: Invalid response format` },
           ]);
         }
-      } else if (status === 500) {
+      } else if (response.status === 500) {
         setMessages((prevMessages) => [
           ...prevMessages,
           {
             role: "assistant",
-            message:
-              "An error occurred: Please contact the system administrator for assistance.",
+            message: `An error occurred: ${response.statusText}. Please contact the system administrator for assistance.`,
           },
         ]);
       } else {
         setMessages((prevMessages) => [
           ...prevMessages,
-          {
-            role: "assistant",
-            message:
-              "An error occurred: Please contact the system administrator for assistance.",
-          },
+          { role: "assistant", message: `An error occurred: ${response.statusText}. Please contact the system administrator for assistance.` },
         ]);
+      }
+
+      if (!selectedSessionId) {
+        setSelectedSessionId(data.session_id);
       }
     } catch (error) {
       console.error("Error fetching search results:", error);
       setMessages((prevMessages) => [
         ...prevMessages,
-        {
-          role: "assistant",
-          message:
-            "An error occurred: Please contact the system administrator for assistance.",
-        },
-      ]);
+        { role: "assistant", message: `An error occurred: Please contact the system administrator for assistance.` },
+      ]); 
     } finally {
       setLoading(false);
       setMessage("");
     }
   };
+
 
   const handleVoiceInput = () => {
     if (
@@ -467,7 +485,7 @@ export default function useChatArea({
                   flexShrink: 0,
                 }}
               >
-                <Image
+                <img
                   src={msg.role === "User" ? userIcon : assistantIcon}
                   alt={`${msg.role} icon`}
                   style={{
