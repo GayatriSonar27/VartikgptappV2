@@ -50,6 +50,8 @@ export default function VectorDB() {
     { name: "", type: "", key: false, index: false, searchable: false },
   ]);
 
+  const charLimit = 500;
+
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
@@ -665,21 +667,34 @@ export default function VectorDB() {
                           </Select>
                         </FormControl>
 
-                        <TextField
-                          name="prompt"
-                          label="Prompt"
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          required
-                          error={formErrors.promptFile}
-                          helperText={formErrors.promptFile ? "Prompt is required" : ""}
-                          sx={{ mb: 2 }}
-                          multiline
-                          rows={2}
-                          value={vectorDBData.promptFile}
-                          onChange={handleChange}
-                        />
+                        
+      <Box sx={{ position: 'relative', mb: 2 }}>
+      <TextField
+        name="promptFile"
+        label="Prompt"
+        variant="outlined"
+        size="small"
+        fullWidth
+        multiline
+        rows={2}
+        value={vectorDBData.promptFile}
+        onChange={handleChange}
+        inputProps={{
+          maxLength: charLimit,
+        }}
+      />
+      <Typography
+        variant="caption"
+        color="textSecondary"
+        sx={{
+          position: 'absolute',
+          bottom: -20, // Position below the text box
+          right: 0,    // Align to the right
+        }}
+      >
+        {vectorDBData.promptFile.length}/{charLimit}
+      </Typography>
+    </Box>
 
                         <TextField
                           name="dimension"
@@ -890,23 +905,33 @@ export default function VectorDB() {
                               ))}
                             </Select>
                           </FormControl>
-                          <TextField
-                            name="prompt"
-                            label="Prompt"
-                            variant="outlined"
-                            size="small"
-                            fullWidth
-                            required
-                            error={formErrors.promptFile} // Display error if validation fails
-                            helperText={
-                              formErrors.promptFile ? "Prompt is required" : ""
-                            }
-                            sx={{ mb: 2 }}
-                            multiline
-                          rows={2}
-                            value={vectorDBData.promptFile}
-                            onChange={handleChange}
-                          />
+                          <Box sx={{ position: 'relative', mb: 2 }}>
+      <TextField
+        name="promptFile"
+        label="Prompt"
+        variant="outlined"
+        size="small"
+        fullWidth
+        multiline
+        rows={2}
+        value={vectorDBData.promptFile}
+        onChange={handleChange}
+        inputProps={{
+          maxLength: charLimit,
+        }}
+      />
+      <Typography
+        variant="caption"
+        color="textSecondary"
+        sx={{
+          position: 'absolute',
+          bottom: -20, // Position below the text box
+          right: 0,    // Align to the right
+        }}
+      >
+        {vectorDBData.promptFile.length}/{charLimit}
+      </Typography>
+    </Box>
 
                           <TextField
                             name="size"
@@ -995,18 +1020,33 @@ export default function VectorDB() {
                             ))}
                           </Select>
                         </FormControl>
-                        <TextField
-                          name="prompt"
-                          label="Prompt"
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          sx={{ mb: 2 }}
-                          multiline
-                          rows={2}
-                          value={vectorDBData.promptFile}
-                          onChange={handleChange}
-                        />
+                        <Box sx={{ position: 'relative', mb: 2 }}>
+      <TextField
+        name="promptFile"
+        label="Prompt"
+        variant="outlined"
+        size="small"
+        fullWidth
+        multiline
+        rows={2}
+        value={vectorDBData.promptFile}
+        onChange={handleChange}
+        inputProps={{
+          maxLength: charLimit,
+        }}
+      />
+      <Typography
+        variant="caption"
+        color="textSecondary"
+        sx={{
+          position: 'absolute',
+          bottom: -20,
+          right: 0,   
+        }}
+      >
+        {vectorDBData.promptFile.length}/{charLimit}
+      </Typography>
+    </Box>
 
                         <Typography variant="subtitle1" gutterBottom>
                           Fields:
