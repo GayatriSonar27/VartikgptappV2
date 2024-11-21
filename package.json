@@ -17,6 +17,7 @@
     "@mui/lab": "^5.0.0-alpha.173",
     "@mui/material": "^5.16.7",
     "axios": "^1.7.5",
+    "docx": "^9.0.3",
     "file-saver": "^2.0.5",
     "jspdf": "^2.5.2",
     "lodash.debounce": "^4.0.8",

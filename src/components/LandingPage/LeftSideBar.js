@@ -19,9 +19,13 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useLogout } from "../Logout/helper";
 import Swal from "sweetalert2";
 import Image from "next/image";
-import { jsPDF } from "jspdf";
+import jsPDF from "jspdf";
+import { Document, Packer, Paragraph, TextRun } from "docx";
+import { saveAs } from "file-saver";
+import PptxGenJS from "pptxgenjs";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const timestamp = new Date().toISOString().split("T")[0];
 
 const Component = memo(({ icon, label, onClick, role }) => {
   return (
@@ -67,6 +71,7 @@ export default function LeftSideBar({ setSelectedTab, setSelectedSessionId }) {
   const [showAll, setShowAll] = useState(false);
   const [hoveredChat, setHoveredChat] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
   const [selectedSessionId, setSelectedSessionIdForMenu] = useState(null);
 
   const fetchChatHistoryByUserId = useCallback(async (uniqueId) => {
@@ -98,7 +103,7 @@ export default function LeftSideBar({ setSelectedTab, setSelectedSessionId }) {
           if (
             !sessionMessagesMap.has(session.sessionId) ||
             new Date(relevantMessage.updatedDateTime) >
-              new Date(sessionMessagesMap.get(session.sessionId).timestamp)
+            new Date(sessionMessagesMap.get(session.sessionId).timestamp)
           ) {
             sessionMessagesMap.set(session.sessionId, {
               sessionId: session.sessionId,
@@ -164,6 +169,184 @@ export default function LeftSideBar({ setSelectedTab, setSelectedSessionId }) {
       console.error("Error deleting chat:", error);
     }
   }, []);
+
+  const handleExportOpen = (event) => {
+    setExportAnchorEl(event.currentTarget);
+  };
+
+  const handleExportClose = () => {
+    setExportAnchorEl(null);
+    setAnchorEl(null);
+    setSelectedSessionIdForMenu(null);
+  };
+
+  const handleExportAsPDF = async (sessionId) => {
+    try {
+      // Fetch chat history
+      const { data: chatHistory } = await axios.get(
+        `${API_BASE_URL}/ChatHistory/session/${sessionId}`
+      );
+
+      // Initialize jsPDF
+      const doc = new jsPDF();
+
+      // Add a title
+      doc.setFontSize(16);
+
+      // Add chat messages to the PDF
+      let y = 20; // Starting Y coordinate
+      chatHistory.forEach((chat) => {
+        if (y > 280) {
+          // Create a new page if content exceeds page height
+          doc.addPage();
+          y = 10;
+        }
+
+        // Add role
+        doc.setFontSize(14);
+        doc.text(`${chat.role}:`, 10, y);
+        y += 8;
+
+        // Add message
+        doc.setFontSize(11);
+        const splitMessage = doc.splitTextToSize(chat.message, 190); // Wrap long text
+        splitMessage.forEach((line) => {
+          doc.text(line, 10, y);
+          y += 7; // Increment Y for each line of the message
+        });
+
+        y += 5; // Add some spacing after each chat entry
+      });
+
+      // Save the PDF
+      doc.save(`ChatHistory_${timestamp}.pdf`);
+
+      // Close the menu
+      handleExportClose();
+    } catch (error) {
+      console.error("Error exporting as PDF:", error);
+    }
+  };
+
+  const handleExportAsDOC = async (sessionId) => {
+    try {
+      // Fetch chat history
+      const { data: chatHistory } = await axios.get(
+        `${API_BASE_URL}/ChatHistory/session/${sessionId}`
+      );
+
+      if (!chatHistory || chatHistory.length === 0) {
+        throw new Error("No chat history found to export.");
+      }
+      // Map chat history into styled Paragraphs with line breaks
+      const chatParagraphs = chatHistory.map((chat) => {
+        const formattedMessage = chat.message.split("\n").map((line, index) => {
+          return new TextRun({
+            text: line,
+            size: 22, // 11pt
+            break: index < chat.message.split("\n").length - 1, // Add a line break except after the last line
+          });
+        });
+
+        return new Paragraph({
+          children: [
+            new TextRun({
+              text: `${chat.role}: `,
+              bold: true,
+              size: 24, // 12pt
+            }),
+            ...formattedMessage, // Add formatted message with line breaks
+          ],
+          spacing: { after: 200 }, // Space between chat entries
+        });
+      });
+
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: [...chatParagraphs],
+          },
+        ],
+      });
+
+      // Generate and download the DOC file
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, `ChatHistory_${timestamp}.doc`);
+
+      // Close the menu
+      handleExportClose();
+    } catch (error) {
+      console.error("Error exporting as DOC:", error);
+    }
+  };
+
+  const handleExportAsPPT = async (sessionId) => {
+    try {
+      const { data: chatHistory } = await axios.get(
+        `${API_BASE_URL}/ChatHistory/session/${sessionId}`
+      );
+      if (!chatHistory || chatHistory.length === 0) {
+        throw new Error("No chat history found to export.");
+      }
+
+      const pptx = new PptxGenJS();
+      const slideHeight = 5; // Total slide height (in inches)
+      let slide = pptx.addSlide(); // Start with the first slide
+      let yPosition = 0.3; // Initial Y position for text on the first slide
+
+      chatHistory.forEach((chat, index) => {
+        const roleText = `${chat.role === "User" ? "User" : "Assistant"}`;
+        const messageLines = chat.message.split("\n");
+
+        // Add Role (User/Assistant)
+        slide.addText(roleText, {
+          x: 0.5,
+          y: yPosition,
+          w: "90%",
+          h: 0.5,
+          fontSize: 20,
+          bold: true,
+        });
+        yPosition += 0.6; // Increment Y position after adding the role text
+
+        // Add Message lines
+        messageLines.forEach((line, lineIndex) => {
+          if (yPosition + 0.4 > slideHeight) {
+            slide = pptx.addSlide(); // Create a new slide if overflow
+            yPosition = 0.3; // Reset Y position for the new slide
+          }
+          slide.addText(line, {
+            x: 0.5,
+            y: yPosition,
+            w: "90%",
+            h: 0.5,
+            fontSize: 16,
+            breakLine: true,
+          });
+          yPosition += 0.4; // Increment Y position after each message line
+        });
+
+        // After both User and Assistant messages are added, check if we need to add a new slide.
+        if (index % 2 === 1) {
+          yPosition += 0.4; // To add a small buffer space after the pair
+        }
+
+        // Check if the next message (whether User or Assistant) needs to go to the next slide
+        if (yPosition >= slideHeight) {
+          slide = pptx.addSlide(); // Add a new slide if the current one is full
+          yPosition = 0.3; // Reset position for the new slide
+        }
+      });
+
+      // Write the PPT file
+      await pptx.writeFile({ fileName: `ChatHistory_${timestamp}.pptx` });
+      console.log("PowerPoint file has been saved.");
+      handleExportClose();
+    } catch (error) {
+      console.error("Error exporting as PPT:", error);
+    }
+  };
 
   useEffect(() => {
     const storedResponse = localStorage.getItem("azureAccount");
@@ -261,8 +444,8 @@ export default function LeftSideBar({ setSelectedTab, setSelectedSessionId }) {
                 ? chat.message.substring(0, 15) + "..."
                 : "New Chat"
               : chat.message
-              ? chat.message.substring(0, 18) + "..."
-              : "New Chat"}
+                ? chat.message.substring(0, 18) + "..."
+                : "New Chat"}
           </Box>
 
           <IconButton
@@ -315,103 +498,34 @@ export default function LeftSideBar({ setSelectedTab, setSelectedSessionId }) {
           <DeleteOutlineIcon fontSize="small" />
           Delete
         </MenuItem>
-        <MenuItem
-          onClick={async () => {
-            try {
-              const chatResponse = await axios.get(
-                `${API_BASE_URL}/ChatHistory/session/${selectedSessionId}`
-              );
-              const chatHistory = chatResponse.data;
-              const doc = new jsPDF();
-              let yPos = 20;
-              const pageHeight = doc.internal.pageSize.height;
-
-              doc.setFontSize(16);
-              doc.setFont("helvetica", "bold");
-              doc.text("Chat History Export", 20, yPos);
-              yPos += 10;
-
-              doc.setFontSize(10);
-              doc.setFont("helvetica", "normal");
-              doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, yPos);
-              yPos += 15;
-
-              const sortedMessages = chatHistory.sort(
-                (a, b) =>
-                  new Date(a.updatedDateTime) - new Date(b.updatedDateTime)
-              );
-
-              sortedMessages.forEach((message) => {
-                const role =
-                  message.role.charAt(0).toUpperCase() + message.role.slice(1);
-                const timestamp = new Date(
-                  message.updatedDateTime
-                ).toLocaleString();
-
-                if (yPos > pageHeight - 20) {
-                  doc.addPage();
-                  yPos = 20;
-                }
-
-                doc.setFontSize(12);
-                doc.setFont("helvetica", "bold");
-                doc.text(`${role}`, 20, yPos);
-                yPos += 5;
-
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "italic");
-                doc.text(`${timestamp}`, 20, yPos);
-                yPos += 10;
-
-                doc.setFontSize(10);
-                doc.setFont("helvetica", "normal");
-                const textLines = doc.splitTextToSize(message.message, 170);
-
-                if (yPos + textLines.length * 5 > pageHeight - 20) {
-                  doc.addPage();
-                  yPos = 20;
-                }
-
-                doc.text(textLines, 20, yPos);
-                yPos += textLines.length * 5 + 15;
-
-                if (yPos > pageHeight - 20) {
-                  doc.addPage();
-                  yPos = 20;
-                }
-                doc.setDrawColor(200, 200, 200);
-                doc.line(20, yPos - 5, 190, yPos - 5);
-                yPos += 10;
-              });
-
-              doc.save(
-                `chat-history-${selectedSessionId}-${new Date()
-                  .toISOString()
-                  .slice(0, 10)}.pdf`
-              );
-
-              handleMenuClose();
-
-              Swal.fire({
-                title: "Success!",
-                text: "Chat history has been exported successfully",
-                icon: "success",
-                timer: 2000,
-                showConfirmButton: false,
-              });
-            } catch (error) {
-              console.error("Error exporting chat:", error);
-              Swal.fire({
-                title: "Error",
-                text: "Failed to export chat history",
-                icon: "error",
-              });
-            }
-          }}
-          sx={{ gap: 1, fontSize: "0.975rem" }}
-        >
+        <MenuItem onClick={handleExportOpen} sx={{ gap: 1, fontSize: "0.975rem" }}>
           <ShareIcon fontSize="small" />
           Export
+        </MenuItem>
+      </Menu>
+
+
+      <Menu
+        anchorEl={exportAnchorEl}
+        open={Boolean(exportAnchorEl)}
+        onClose={handleExportClose}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "left",
+        }}
+      >
+        <MenuItem onClick={() => handleExportAsPDF(selectedSessionId)}>
+          Export as PDF
+        </MenuItem>
+        <MenuItem onClick={() => handleExportAsDOC(selectedSessionId)}>
+          Export as DOC
+        </MenuItem>
+        <MenuItem onClick={() => handleExportAsPPT(selectedSessionId)}>
+          Export as PPT
         </MenuItem>
       </Menu>
 

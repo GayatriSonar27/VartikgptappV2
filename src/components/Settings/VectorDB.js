@@ -18,7 +18,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-const VectorDB_API_BASE_URL = process.env.REACT_APP_VECTORDB_API_BASE_URL;                  
+const VectorDB_API_BASE_URL = process.env.REACT_APP_VECTORDB_API_BASE_URL;
 
 export default function VectorDB() {
   const [isCreateIndexChecked, setIsCreateIndexChecked] = useState(false);
@@ -667,34 +667,34 @@ export default function VectorDB() {
                           </Select>
                         </FormControl>
 
-                        
-      <Box sx={{ position: 'relative', mb: 2 }}>
-      <TextField
-        name="promptFile"
-        label="Prompt"
-        variant="outlined"
-        size="small"
-        fullWidth
-        multiline
-        rows={2}
-        value={vectorDBData.promptFile}
-        onChange={handleChange}
-        inputProps={{
-          maxLength: charLimit,
-        }}
-      />
-      <Typography
-        variant="caption"
-        color="textSecondary"
-        sx={{
-          position: 'absolute',
-          bottom: -20, // Position below the text box
-          right: 0,    // Align to the right
-        }}
-      >
-        {vectorDBData.promptFile.length}/{charLimit}
-      </Typography>
-    </Box>
+
+                        <Box sx={{ position: 'relative', mb: 2 }}>
+                          <TextField
+                            name="promptFile"
+                            label="Prompt"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            multiline
+                            rows={2}
+                            value={vectorDBData.promptFile}
+                            onChange={handleChange}
+                            inputProps={{
+                              maxLength: charLimit,
+                            }}
+                          />
+                          <Typography
+                            variant="caption"
+                            color="textSecondary"
+                            sx={{
+                              position: 'absolute',
+                              bottom: -20, // Position below the text box
+                              right: 0,    // Align to the right
+                            }}
+                          >
+                            {vectorDBData.promptFile.length}/{charLimit}
+                          </Typography>
+                        </Box>
 
                         <TextField
                           name="dimension"
@@ -906,32 +906,32 @@ export default function VectorDB() {
                             </Select>
                           </FormControl>
                           <Box sx={{ position: 'relative', mb: 2 }}>
-      <TextField
-        name="promptFile"
-        label="Prompt"
-        variant="outlined"
-        size="small"
-        fullWidth
-        multiline
-        rows={2}
-        value={vectorDBData.promptFile}
-        onChange={handleChange}
-        inputProps={{
-          maxLength: charLimit,
-        }}
-      />
-      <Typography
-        variant="caption"
-        color="textSecondary"
-        sx={{
-          position: 'absolute',
-          bottom: -20, // Position below the text box
-          right: 0,    // Align to the right
-        }}
-      >
-        {vectorDBData.promptFile.length}/{charLimit}
-      </Typography>
-    </Box>
+                            <TextField
+                              name="promptFile"
+                              label="Prompt"
+                              variant="outlined"
+                              size="small"
+                              fullWidth
+                              multiline
+                              rows={2}
+                              value={vectorDBData.promptFile}
+                              onChange={handleChange}
+                              inputProps={{
+                                maxLength: charLimit,
+                              }}
+                            />
+                            <Typography
+                              variant="caption"
+                              color="textSecondary"
+                              sx={{
+                                position: 'absolute',
+                                bottom: -20, // Position below the text box
+                                right: 0,    // Align to the right
+                              }}
+                            >
+                              {vectorDBData.promptFile.length}/{charLimit}
+                            </Typography>
+                          </Box>
 
                           <TextField
                             name="size"
@@ -1021,32 +1021,32 @@ export default function VectorDB() {
                           </Select>
                         </FormControl>
                         <Box sx={{ position: 'relative', mb: 2 }}>
-      <TextField
-        name="promptFile"
-        label="Prompt"
-        variant="outlined"
-        size="small"
-        fullWidth
-        multiline
-        rows={2}
-        value={vectorDBData.promptFile}
-        onChange={handleChange}
-        inputProps={{
-          maxLength: charLimit,
-        }}
-      />
-      <Typography
-        variant="caption"
-        color="textSecondary"
-        sx={{
-          position: 'absolute',
-          bottom: -20,
-          right: 0,   
-        }}
-      >
-        {vectorDBData.promptFile.length}/{charLimit}
-      </Typography>
-    </Box>
+                          <TextField
+                            name="promptFile"
+                            label="Prompt"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            multiline
+                            rows={2}
+                            value={vectorDBData.promptFile}
+                            onChange={handleChange}
+                            inputProps={{
+                              maxLength: charLimit,
+                            }}
+                          />
+                          <Typography
+                            variant="caption"
+                            color="textSecondary"
+                            sx={{
+                              position: 'absolute',
+                              bottom: -20,
+                              right: 0,
+                            }}
+                          >
+                            {vectorDBData.promptFile.length}/{charLimit}
+                          </Typography>
+                        </Box>
 
                         <Typography variant="subtitle1" gutterBottom>
                           Fields:
