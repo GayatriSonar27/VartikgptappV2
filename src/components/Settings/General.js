@@ -1,27 +1,38 @@
-import axios from "axios";
-import PropTypes from "prop-types";
-import { useMsal } from "@azure/msal-react";
 import React, { useState, useEffect, useCallback } from "react";
-import Stack from "@mui/material/Stack";
-import Checkbox from "@mui/material/Checkbox";
-import Container from "@mui/material/Container";
-import TextField from "@mui/material/TextField";
-import LoadingButton from "@mui/lab/LoadingButton";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import { v4 as uuidv4 } from "uuid";
-import { loginRequest } from "../LoginForm/msalConfig";
+import { useMsal } from "@azure/msal-react";
+import PropTypes from "prop-types";
 import {
-  Box,
+  fetchSessionByUserId,
+  fetchCategoryByName,
+  createCategory,
+  fetchDepartmentByCategoryId,
+  createDepartment,
+  fetchDepartmentById,
+  fetchUserByUniqueId,
+  createUser,
+  fetchEmbLLMRef,
+  fetchGraphMemberOf,
+  updateSessionByUserId,
+  createSession,
+} from "./apiService";
+import { v4 as uuidv4 } from "uuid";
+import {
+  Container,
+  Typography,
+  Stack,
+  TextField,
   FormControl,
   InputLabel,
   MenuItem,
   Select,
-  Typography,
+  Checkbox,
+  FormControlLabel,
+  Box,
 } from "@mui/material";
+import LoadingButton from "@mui/lab/LoadingButton";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+import { loginRequest } from "../LoginForm/msalConfig";
 
 const initialFormData = {
   userId: 0,
@@ -51,7 +62,6 @@ export default function General({ onDepartmentNameChange }) {
   const [vendors, setVendors] = useState([]);
   const [models, setModels] = useState([]);
 
-  // Get Access Token for azure login
   const getAccessToken = useCallback(
     async () =>
       instance.acquireTokenSilent({
@@ -61,17 +71,14 @@ export default function General({ onDepartmentNameChange }) {
     [instance, accounts]
   );
 
-  // Fetch Session details from DB if exists
   const fetchUserSession = useCallback(async (userId) => {
     try {
-      const sessionResponse = await axios.get(
-        `${API_BASE_URL}/Sessions/GetSessionByUserId/${userId}`
-      );
+      const sessionResponse = await fetchSessionByUserId(userId);
       if (sessionResponse.data) {
         setFormData((prevState) => ({
           ...prevState,
           ...sessionResponse.data,
-          userId: userId,
+          userId,
           admin: sessionResponse.data.admin,
           routingEnabled: sessionResponse.data.routingEnabled,
           cacheEnabled: sessionResponse.data.cacheEnabled,
@@ -80,95 +87,55 @@ export default function General({ onDepartmentNameChange }) {
         }));
       }
     } catch (err) {
-      if (err.response && err.response.status === 404) {
+      if (err.response?.status === 404) {
         setFormData((prevState) => ({
           ...prevState,
-          userId: userId,
-          admin: formData.admin,
-          routingEnabled: formData.routingEnabled || false,
-          cacheEnabled: formData.cacheEnabled || false,
-          temp:
-            parseFloat(formData.temp).toFixed(1) || parseFloat(0.0).toFixed(1),
-          maxTokens: formData.maxTokens || parseInt(0),
+          userId,
         }));
-        console.log(formData);
       }
     }
   }, []);
 
-  // Initial function calls when page load
   const callGraphApi = useCallback(async () => {
     try {
       setIsLoading(true);
       const userResponse = await getAccessToken();
-      const graphResponse = await axios.get(
-        `https://graph.microsoft.com/v1.0/users/${userResponse.uniqueId}/memberOf`,
-        {
-          headers: {
-            Authorization: `Bearer ${userResponse.accessToken}`,
-          },
-        }
+      const graphResponse = await fetchGraphMemberOf(
+        userResponse.uniqueId,
+        userResponse.accessToken
       );
       const azureDepartmentName = graphResponse.data.value[1].displayName;
-
-      // Fetch or create category
-      const categoryResponse = await axios.get(
-        `${API_BASE_URL}/Category/search?name=${encodeURIComponent(
-          azureDepartmentName
-        )}`
-      );
+      const categoryResponse = await fetchCategoryByName(azureDepartmentName);
       let categoryId;
-      if (
-        categoryResponse.data === null ||
-        categoryResponse.data.length === 0
-      ) {
-        const createCategoryResponse = await axios.post(
-          `${API_BASE_URL}/Category`,
-          {
-            name: azureDepartmentName,
-          }
-        );
+      if (!categoryResponse.data?.length) {
+        const createCategoryResponse = await createCategory({
+          name: azureDepartmentName,
+        });
         categoryId = createCategoryResponse.data.id;
       } else {
         categoryId = categoryResponse.data[0].id;
       }
-
-      // Fetch or create department
-      const fetchDepartmentIdResponse = await axios.get(
-        `${API_BASE_URL}/Department/DepartmentIdByCategoryId/${categoryId}`
+      const fetchDepartmentIdResponse = await fetchDepartmentByCategoryId(
+        categoryId
       );
       let departmentId;
-      if (
-        fetchDepartmentIdResponse.data === null ||
-        fetchDepartmentIdResponse.data.length === 0
-      ) {
-        const createDepartmentResponse = await axios.post(
-          `${API_BASE_URL}/Department`,
-          {
-            name: azureDepartmentName,
-            categoryId,
-          }
-        );
+      if (!fetchDepartmentIdResponse.data?.length) {
+        const createDepartmentResponse = await createDepartment({
+          name: azureDepartmentName,
+          categoryIds: [categoryId],
+        });
         departmentId = createDepartmentResponse.data.id;
       } else {
-         departmentId = fetchDepartmentIdResponse.data;
+        departmentId = fetchDepartmentIdResponse.data;
       }
-
-      // Fetch Department Name
-      const fetchDepartmentName = await axios.get(
-        `${API_BASE_URL}/Department/${departmentId}`
-      );
+      const fetchDepartmentName = await fetchDepartmentById(departmentId);
       const departmentName = fetchDepartmentName.data.name;
-
-      // Fetch or create user
       let userDataResponse;
       try {
-        userDataResponse = await axios.get(
-          `${API_BASE_URL}/User/unique/${userResponse.uniqueId}`
-        );
+        userDataResponse = await fetchUserByUniqueId(userResponse.uniqueId);
       } catch (err) {
-        if (err.response && err.response.status === 404) {
-          userDataResponse = await axios.post(`${API_BASE_URL}/User`, {
+        if (err.response?.status === 404) {
+          userDataResponse = await createUser({
             name: userResponse.account.name,
             uniqueAzureId: userResponse.uniqueId,
             departmentIds: [departmentId],
@@ -177,8 +144,8 @@ export default function General({ onDepartmentNameChange }) {
           throw err;
         }
       }
+
       const userId = userDataResponse.data.id || userDataResponse.data.user.id;
-      // Fetch user session
       await fetchUserSession(userId);
 
       setFormData((prevState) => ({
@@ -187,12 +154,10 @@ export default function General({ onDepartmentNameChange }) {
         UniqueAzureId: userResponse.uniqueId,
         departmentId,
         departmentName,
-        userId: userId,
+        userId,
       }));
-      console.log(formData);
-      if (onDepartmentNameChange) {
-        onDepartmentNameChange(departmentName);
-      }
+
+      if (onDepartmentNameChange) onDepartmentNameChange(departmentName);
     } catch (err) {
       console.error("Error fetching data:", err);
       setError("Failed to fetch user data. Please try again.");
@@ -201,10 +166,8 @@ export default function General({ onDepartmentNameChange }) {
     }
   }, [getAccessToken, onDepartmentNameChange, fetchUserSession]);
 
-  // Fetch data from API
   useEffect(() => {
-    axios
-      .get(`${API_BASE_URL}/EmbLLMRef`)
+    fetchEmbLLMRef()
       .then((response) => {
         const data = response.data;
         const uniqueVendors = [...new Set(data.map((item) => item.type))];
@@ -216,38 +179,22 @@ export default function General({ onDepartmentNameChange }) {
       });
   }, []);
 
-  // Get models based on selected vendor
   const filteredModels = models.filter(
     (model) => model.type === formData.embLLMVendor
   );
 
-  // useEffect method
-  useEffect(() => {
-    callGraphApi();
-  }, [callGraphApi]);
-
-  // Handle change for form elements
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
     setFormData((prevState) => ({
       ...prevState,
       [name]: type === "checkbox" ? checked : value,
     }));
-    localStorage.setItem(
-      "formData",
-      JSON.stringify({
-        ...formData,
-        [name]: type === "checkbox" ? checked : value,
-      })
-    );
   };
 
-  // Handle form submit
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      // Prepare session data
       const sessionData = {
         SessionId: formData.sessionId,
         UserId: formData.userId,
@@ -267,46 +214,39 @@ export default function General({ onDepartmentNameChange }) {
         vectorStore: formData.vectorStore,
         vectorIndex: formData.vectorIndex,
       };
-      console.log("session Data", sessionData);
-      // Create or update session
       let sessionResponse;
       try {
-        sessionResponse = await axios.get(
-          `${API_BASE_URL}/Sessions/GetSessionByUserId/${formData.userId}`
-        );
-        await axios.put(
-          `${API_BASE_URL}/Sessions/UpdateSessionByUserId/${formData.userId}`,
-          sessionData
-        );
+        sessionResponse = await fetchSessionByUserId(formData.userId);
+        await updateSessionByUserId(formData.userId, sessionData);
         setIsUpdating(true);
       } catch (err) {
         if (err.response && err.response.status === 404) {
-          sessionResponse = await axios.post(
-            `${API_BASE_URL}/Sessions`,
-            sessionData
-          );
+          sessionResponse = await createSession(sessionData);
           setIsUpdating(false);
         } else {
           throw err;
         }
       }
-      // Update form data with the latest information
       const updatedFormData = {
         ...formData,
         sessionId: sessionResponse.data.sessionId,
       };
       setFormData(updatedFormData);
       localStorage.setItem("formData", JSON.stringify(updatedFormData));
-      console.log("sds", updatedFormData);
       if (isUpdating) toast.success("Data updated successfully!");
       else toast.success("Data saved successfully!");
     } catch (err) {
       setError("Failed to save data. Please try again.");
-      toast.error("Failed to save data. Please try again.", err);
+      toast.error("Failed to save data. Please try again.");
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    callGraphApi();
+  }, [callGraphApi]);
 
   return (
     <Container sx={{ padding: "16px" }}>
@@ -336,12 +276,14 @@ export default function General({ onDepartmentNameChange }) {
           value={formData.name}
           onChange={handleChange}
         />
-     
+
         <FormControlLabel
           control={
             <Checkbox
               name="admin"
-              checked={formData.departmentName === "ADMIN" ? true : formData.admin}
+              checked={
+                formData.departmentName === "ADMIN" ? true : formData.admin
+              }
               onChange={handleChange}
               disabled={formData.departmentName !== "ADMIN"}
             />
@@ -354,7 +296,7 @@ export default function General({ onDepartmentNameChange }) {
           variant="outlined"
           size="small"
           value={formData.departmentName}
-          onChange={handleChange}
+          onChange={handleChange}          
         />
         <FormControl size="small">
           <InputLabel id="select-chunking-type-label">Chunking Type</InputLabel>
@@ -455,5 +397,5 @@ export default function General({ onDepartmentNameChange }) {
 }
 
 General.propTypes = {
-  onDepartmentNameChange: PropTypes.func.isRequired,
+  onDepartmentNameChange: PropTypes.func,
 };

@@ -23,7 +23,7 @@ export default function Home() {
         <title>GenAI-VartikGPT</title>
       </Head>
       <Layout>
-        <LoginForm />
+        <LoginForm /> 
       </Layout>
     </>
   );
