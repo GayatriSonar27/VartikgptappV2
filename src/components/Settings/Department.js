@@ -410,7 +410,13 @@ export default function App() {
   }, [loadDepartments]);
 
   const handleTabChange = (event, newValue) => {
+    if (newValue !== 2) {
+      setSelectedDepartment(null);
+    }
     setTabIndex(newValue);
+    if (newValue === 0) {
+      loadDepartments();
+    }
   };
 
   const handleDelete = async (id) => {
@@ -453,7 +459,7 @@ export default function App() {
       <Tabs value={tabIndex} onChange={handleTabChange} aria-label="tabs">
         <Tab label="View" />
         <Tab label="Create" />
-        <Tab label="Update" />
+        {selectedDepartment && <Tab label="Update" />}
       </Tabs>
       {tabIndex === 0 && (
         <DepartmentTable
