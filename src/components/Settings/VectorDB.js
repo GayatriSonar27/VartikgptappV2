@@ -29,7 +29,7 @@ export default function VectorDB() {
   const [selectedCloud, setSelectedCloud] = useState("");
   const [isVectorStoreSelected, setIsVectorStoreSelected] = useState(false);
   const [departments, setDepartments] = useState([]);
-  const [formErrors, setFormErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const [vectorDBData, setvectorDBData] = useState({
     name: "",
     departmentId: "",
@@ -83,34 +83,27 @@ export default function VectorDB() {
 
   const createPineconeIndex = async () => {
     try {
+      setLoading(true);
       if (selectedVectorStore === "Pinecone") {
         let indexExists = false;
-
-        try {
-          // Attempt to check if the Pinecone index exists
+        try {         
           indexExists = await checkPineconeIndexExists(vectorDBData.name);
         } catch (error) {
-          // Handle error when checking for the Pinecone index's existence
           if (error.response && error.response.status === 500) {
-            console.error(
-              "Server error while checking Pinecone index existence:",
-              error
-            );
-            toast.error(
-              "A server error occurred while checking for Pinecone index existence."
-            );
-            return; // Stop further execution
+            console.error("Server error while checking Pinecone index existence:",error);
+            toast.error("A server error occurred while checking for Pinecone index existence.");
+            setLoading(false);
+            return;
           } else {
             console.error("Error checking Pinecone index existence:", error);
-            throw error; // Re-throw if it's not specifically handled
+            throw error;
           }
         }
-
         if (indexExists) {
           toast.info(`Pinecone index "${vectorDBData.name}" already exists.`);
+          setLoading(false);
           return;
         }
-
         const externalPayload = {
           index_name: vectorDBData.name,
           prompt: vectorDBData.promptFile,
@@ -124,7 +117,6 @@ export default function VectorDB() {
             },
           },
         };
-
         if (selectedCapacity === "serverless") {
           externalPayload.fields.spec.region = vectorDBData.region;
         } else if (selectedCapacity === "pods") {
@@ -132,9 +124,7 @@ export default function VectorDB() {
           externalPayload.fields.spec.podType = vectorDBData.podType;
           externalPayload.fields.spec.pods = parseInt(vectorDBData.pods, 10);
         }
-
         try {
-          // First, create the Pinecone index
           await axios.post(
             `${VectorDB_API_BASE_URL}/pinecone/create`,
             externalPayload
@@ -142,21 +132,19 @@ export default function VectorDB() {
           toast.success(
             `Pinecone index "${vectorDBData.name}" created successfully.`
           );
-
-          // Now, after the Pinecone index is created, create the VectorStore record
           await axios.post(`${API_BASE_URL}/VectorStore`, {
             VectorIndex: vectorDBData.name,
             Type: selectedVectorStore,
             DepartmentId: vectorDBData.departmentId,
           });
         } catch (err) {
-          // Handle error from creating the Pinecone index
           toast.error(`Error creating Pinecone index "${vectorDBData.name}".`);
           console.error("Error creating Pinecone index:", err);
-        }
+        }finally{setLoading(false);}
       }
     } catch (error) {
-      if (error.response && error.response.status === 409) {
+      setLoading(false); 
+      if (error.response && error.response.status === 409) {    
         toast.error(
           "A record with the same vector index for department already exists."
         );
@@ -171,6 +159,7 @@ export default function VectorDB() {
 
   const deletePineconeIndex = async () => {
     try {
+      setLoading(true);
       if (selectedVectorStore === "Pinecone") {
         await axios.post(`${VectorDB_API_BASE_URL}/pinecone/delete`, {
           index_name: vectorDBData.name,
@@ -185,6 +174,8 @@ export default function VectorDB() {
     } catch (error) {
       toast.error("Error deleting Pinecone index", error);
       console.error("Error deleting Pinecone index:", error);
+    }finally {
+      setLoading(false);
     }
   };
 
@@ -204,6 +195,7 @@ export default function VectorDB() {
 
   const createQdrantCollection = async () => {
     try {
+      setLoading(true);
       if (selectedVectorStore === "Qdrant") {
         let collectionExists = false;
 
@@ -213,6 +205,7 @@ export default function VectorDB() {
             vectorDBData.name
           );
         } catch (error) {
+          setLoading(false);
           // Handle error when checking for the Qdrant collection's existence
           if (error.response && error.response.status === 500) {
             console.error(
@@ -230,6 +223,7 @@ export default function VectorDB() {
         }
 
         if (collectionExists) {
+          setLoading(false);
           toast.info(
             `Qdrant collection "${vectorDBData.name}" already exists.`
           );
@@ -259,6 +253,7 @@ export default function VectorDB() {
           });
         } catch (err) {
           // Handle error from creating the Qdrant collection
+          setLoading(false);
           toast.error(
             `Error creating Qdrant collection "${vectorDBData.name}".`
           );
@@ -266,6 +261,7 @@ export default function VectorDB() {
         }
       }
     } catch (error) {
+      setLoading(false);
       if (error.response && error.response.status === 409) {
         toast.error(
           "A record with the same vector index for department already exists."
@@ -276,11 +272,12 @@ export default function VectorDB() {
         );
         console.error("Error creating VectorStore record:", error);
       }
-    }
+    }finally{setLoading(false);}
   };
 
   const deleteQdrantCollection = async () => {
     try {
+      setLoading(true);
       if (selectedVectorStore === "Qdrant") {
         await axios.post(`${VectorDB_API_BASE_URL}/qdrant/deletecollection`, {
           collection_name: vectorDBData.name,
@@ -295,7 +292,7 @@ export default function VectorDB() {
     } catch (error) {
       console.error("Error deleting Qdrant collection:", error);
       toast.error("Error deleting Qdrant collection", error);
-    }
+    }finally{setLoading(false);}
   };
 
   const checkAzureIndexExists = async (indexName) => {
@@ -313,6 +310,7 @@ export default function VectorDB() {
 
   const createAzureIndex = async () => {
     try {
+      setLoading(false);
       if (selectedVectorStore === "AzureOpenAI") {
         let indexExists = false;
 
@@ -320,6 +318,7 @@ export default function VectorDB() {
           // Attempt to check if the Azure index exists
           indexExists = await checkAzureIndexExists(vectorDBData.name);
         } catch (error) {
+          setLoading(false);
           if (error.response && error.response.status === 500) {
             console.error(
               "Server error while checking if the Azure index exists:",
@@ -336,6 +335,7 @@ export default function VectorDB() {
         }
 
         if (indexExists) {
+          setLoading(false);
           toast.info(`Azure index "${vectorDBData.name}" already exists.`);
           return;
         }
@@ -368,11 +368,13 @@ export default function VectorDB() {
           });
         } catch (err) {
           // Handle error from creating the Azure index
+          setLoading(false);
           toast.error(`Error creating Azure index "${vectorDBData.name}".`);
           console.error("Error creating Azure index:", err);
         }
       }
     } catch (error) {
+      setLoading(false);
       if (error.response && error.response.status === 409) {
         console.error(
           `A record with the same vector index "${vectorDBData.name}" for the department already exists.`
@@ -383,11 +385,12 @@ export default function VectorDB() {
         );
         console.error("Error creating VectorStore record:", error);
       }
-    }
+    }finally{setLoading(false);}
   };
 
   const deleteAzureindex = async () => {
     try {
+      setLoading(false);
       if (selectedVectorStore === "AzureOpenAI") {
         await axios.post(`${VectorDB_API_BASE_URL}/azuresearch/delete`, {
           index_name: vectorDBData.name,
@@ -400,6 +403,7 @@ export default function VectorDB() {
         toast.success("Azure Index deleted");
       }
     } catch (error) {
+      setLoading(false);
       console.error("Error deleting Azure Index", error);
       toast.error("Error deleting Azure Index", error);
     }
@@ -1193,6 +1197,8 @@ export default function VectorDB() {
             onClick={handleSubmit}
             variant="contained"
             color="primary"
+            loading={loading}
+            disabled={loading}
             sx={{
               visibility: isSubmitVisible ? "visible" : "hidden",
             }}
