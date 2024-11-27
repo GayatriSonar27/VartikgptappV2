@@ -17,6 +17,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   Tabs,
   TextField,
@@ -122,53 +123,100 @@ const useDepartments = () => {
   return { departments, setDepartments, loadDepartments };
 };
 
-const DepartmentTable = memo(({ departments, onDelete, onEdit }) => {
+const DepartmentTable = ({ departments, onDelete, onEdit }) => {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Paginated departments
+  const paginatedDepartments = departments.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
   return (
-    <TableContainer component={Paper} sx={{ marginTop: "40px", border: "1px solid #ddd" }}>
-      <Table>
+    <TableContainer component={Paper} sx={{ marginTop: "25px", border: "1px solid #ddd" }}>
+      <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
         <TableHead>
           <TableRow>
-            <TableCell><Typography variant="body1" fontWeight="bold">Department</Typography></TableCell>
-            <TableCell><Typography variant="body1" fontWeight="bold">Roles</Typography></TableCell>
-            <TableCell align="center"><Typography variant="body1" fontWeight="bold">Actions</Typography></TableCell>
+            <TableCell >
+              <Typography variant="body1" fontWeight="bold">
+                Department
+              </Typography>
+            </TableCell>
+            <TableCell >
+              <Typography variant="body1" fontWeight="bold">
+                Roles
+              </Typography>
+            </TableCell>
+            <TableCell align="center">
+              <Typography variant="body1" fontWeight="bold">
+                Actions
+              </Typography>
+            </TableCell>
           </TableRow>
         </TableHead>
-        <TableBody>
-          {departments.map((row, index) => (
-            <TableRow key={row.id} sx={{ backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#ffffff" }}>
-              <TableCell>
-                <Typography variant="subtitle1">{row.name}</Typography>
-              </TableCell> 
-              <TableCell>
-                {row.categories.map((category) => (
-                  <Chip
-                    key={category.id}
-                    label={category.name}
-                    variant="outlined"
-                    size="small"
-                    sx={{ marginRight: 0.5, marginBottom: 0.5 }}
-                  />
-                ))}
-              </TableCell>
-              <TableCell align="center">
-                <Tooltip title="Edit">
-                  <IconButton color="primary" onClick={() => onEdit(row)}>
-                    <EditOutlinedIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete">
-                  <IconButton color="error" onClick={() => onDelete(row.id)}>
-                    <DeleteOutlinedIcon />
-                  </IconButton>
-                </Tooltip>
+        <TableBody >
+          {paginatedDepartments.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={3} align="center">
+                <Typography variant="body2">No data available</Typography>
               </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            paginatedDepartments.map((row, index) => (
+              <TableRow key={row.id} sx={{ backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#ffffff" }} padding="none">
+                <TableCell >
+                  <Typography variant="subtitle1">{row.name}</Typography>
+                </TableCell>
+                <TableCell >
+                  {row.categories.map((category) => (
+                    <Chip
+                      key={category.id}
+                      label={category.name}
+                      variant="outlined"
+                      size="small"
+                      sx={{ marginRight: 0.5, marginBottom: 0.5 }}
+                    />
+                  ))}
+                </TableCell>
+                <TableCell align="center">
+                  <Tooltip title="Edit">
+                    <IconButton color="primary" onClick={() => onEdit(row)}>
+                      <EditOutlinedIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete">
+                    <IconButton color="error" onClick={() => onDelete(row.id)}>
+                      <DeleteOutlinedIcon />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
+      <TablePagination
+        rowsPerPageOptions={[5, 10]}
+        component="div"
+        count={departments.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
     </TableContainer>
   );
-});
+};
 DepartmentTable.displayName = "DepartmentTable";
 
 
