@@ -310,7 +310,7 @@ export default function VectorDB() {
 
   const createAzureIndex = async () => {
     try {
-      setLoading(false);
+      setLoading(true);
       if (selectedVectorStore === "AzureOpenAI") {
         let indexExists = false;
 
@@ -390,7 +390,7 @@ export default function VectorDB() {
 
   const deleteAzureindex = async () => {
     try {
-      setLoading(false);
+      setLoading(true);
       if (selectedVectorStore === "AzureOpenAI") {
         await axios.post(`${VectorDB_API_BASE_URL}/azuresearch/delete`, {
           index_name: vectorDBData.name,
