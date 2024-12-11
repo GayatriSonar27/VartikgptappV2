@@ -16,7 +16,7 @@ export default function Settings() {
   };
 
   const handleDepartmentChange = (departmentName) => {
-    const isAdmin = departmentName === "ADMIN";
+    const isAdmin = departmentName === "ADMIN" ;
     setShowDataIngestion(isAdmin);
     setShowVectorDB(isAdmin);
     setShowDepartment(isAdmin);
