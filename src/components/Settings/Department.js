@@ -126,6 +126,7 @@ const useDepartments = () => {
 const DepartmentTable = ({ departments, onDelete, onEdit }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [vectorIndexes, setVectorIndexes] = useState({});
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -135,6 +136,68 @@ const DepartmentTable = ({ departments, onDelete, onEdit }) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+  // Fetch vector indexes for a specific department
+  const fetchVectorIndexes = async (departmentId) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/VectorStore/department/${departmentId}`,
+        {
+          headers: { accept: "text/plain" },
+        }
+      );
+      if (!response.ok) throw new Error("Failed to fetch vector indexes");
+      const data = await response.json();
+      return data; // Assuming data is an array of vector indexes
+    } catch (error) {
+      console.error("Error fetching vector indexes:", error);
+      return [];
+    }
+  };
+
+  // Fetch vector indexes for all departments on mount or when departments change
+  useEffect(() => {
+    const fetchAllVectorIndexes = async () => {
+      const indexes = {};
+      for (const department of departments) {
+        const data = await fetchVectorIndexes(department.id);
+        indexes[department.id] = data;
+      }
+      setVectorIndexes(indexes);
+    };
+
+    if (departments.length > 0) {
+      fetchAllVectorIndexes();
+    }
+  }, [departments]);
+
+  const handleDelete = (department) => {
+    const indexes = vectorIndexes[department.id];
+
+    if (indexes && indexes.length > 0) {
+      // Show SweetAlert2 for info message to delete vector indexes first
+      Swal.fire({
+        title: "Information",
+        text: "First, delete the vector indexes associated with this department.",
+        icon: "info",
+        confirmButtonText: "OK",
+      });
+    } else {
+      // Show SweetAlert2 for delete confirmation
+      Swal.fire({
+        title: "Are you sure?",
+        text: "With this department, dependent ingetion data will also be deleted. Do you want to proceed?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, delete it!",
+        cancelButtonText: "No, cancel",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Call the onDelete function if confirmed
+          onDelete(department.id);
+        }
+      });
+    }
+  };
 
   // Paginated departments
   const paginatedDepartments = departments.slice(
@@ -143,18 +206,26 @@ const DepartmentTable = ({ departments, onDelete, onEdit }) => {
   );
 
   return (
-    <TableContainer component={Paper} sx={{ marginTop: "25px", border: "1px solid #ddd" }}>
+    <TableContainer
+      component={Paper}
+      sx={{ marginTop: "25px", border: "1px solid #ddd" }}
+    >
       <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
         <TableHead>
           <TableRow>
-            <TableCell >
+            <TableCell>
               <Typography variant="body1" fontWeight="bold">
                 Department
               </Typography>
             </TableCell>
-            <TableCell >
+            <TableCell>
               <Typography variant="body1" fontWeight="bold">
                 Roles
+              </Typography>
+            </TableCell>
+            <TableCell>
+              <Typography variant="body1" fontWeight="bold">
+                Vector Indexes
               </Typography>
             </TableCell>
             <TableCell align="center">
@@ -164,7 +235,7 @@ const DepartmentTable = ({ departments, onDelete, onEdit }) => {
             </TableCell>
           </TableRow>
         </TableHead>
-        <TableBody >
+        <TableBody>
           {paginatedDepartments.length === 0 ? (
             <TableRow>
               <TableCell colSpan={3} align="center">
@@ -173,11 +244,17 @@ const DepartmentTable = ({ departments, onDelete, onEdit }) => {
             </TableRow>
           ) : (
             paginatedDepartments.map((row, index) => (
-              <TableRow key={row.id} sx={{ backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#ffffff" }} padding="none">
-                <TableCell >
+              <TableRow
+                key={row.id}
+                sx={{
+                  backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#ffffff",
+                }}
+                padding="none"
+              >
+                <TableCell>
                   <Typography variant="subtitle1">{row.name}</Typography>
                 </TableCell>
-                <TableCell >
+                <TableCell>
                   {row.categories.map((category) => (
                     <Chip
                       key={category.id}
@@ -188,6 +265,31 @@ const DepartmentTable = ({ departments, onDelete, onEdit }) => {
                     />
                   ))}
                 </TableCell>
+                <TableCell>
+                  {vectorIndexes[row.id] && vectorIndexes[row.id].length > 0 ? (
+                    vectorIndexes[row.id].map((vector) => (
+                      <Chip
+                        key={vector.id} // Use vector.id or vector.vectorIndex for uniqueness
+                        label={vector.vectorIndex} // Display vectorIndex directly
+                        variant="outlined"
+                        size="small"
+                        sx={{ marginRight: 0.5, marginBottom: 0.5 }}
+                      />
+                    ))
+                  ) : (
+                    <Chip
+                      label="No vector indexes"
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        marginRight: 0.5,
+                        marginBottom: 0.5,
+                        backgroundColor: "#f1f1f1", // Optional: make the "No vector indexes" look slightly different
+                        color: "#757575", // Optional: for text color
+                      }}
+                    />
+                  )}
+                </TableCell>
                 <TableCell align="center">
                   <Tooltip title="Edit">
                     <IconButton color="primary" onClick={() => onEdit(row)}>
@@ -195,7 +297,7 @@ const DepartmentTable = ({ departments, onDelete, onEdit }) => {
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Delete">
-                    <IconButton color="error" onClick={() => onDelete(row.id)}>
+                    <IconButton color="error" onClick={() => handleDelete(row)}>
                       <DeleteOutlinedIcon />
                     </IconButton>
                   </Tooltip>
@@ -218,7 +320,6 @@ const DepartmentTable = ({ departments, onDelete, onEdit }) => {
   );
 };
 DepartmentTable.displayName = "DepartmentTable";
-
 
 const DepartmentForm = memo(({ categories, onSave }) => {
   const [formData, setFormData] = useState({
@@ -468,21 +569,12 @@ export default function App() {
   };
 
   const handleDelete = async (id) => {
-    const confirmation = await Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
-    });
-    if (confirmation.isConfirmed) {
-      try {
-        await apiService.deleteDepartment(id);
-        toast.success("Department deleted successfully");
-        loadDepartments();
-      } catch (error) {
-        toast.error("Failed to delete department");
-      }
+    try {
+      await apiService.deleteDepartment(id);
+      toast.success("Department deleted successfully");
+      loadDepartments();
+    } catch (error) {
+      toast.error("Failed to delete department");
     }
   };
 
@@ -501,7 +593,7 @@ export default function App() {
     setSelectedDepartment(null);
     setTabIndex(0);
   };
-  
+
   return (
     <>
       <ToastContainer />
